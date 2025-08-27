@@ -38,8 +38,9 @@ def upload_file():
                     file, 
                     BUCKET_NAME, 
                     file_key, 
-                    ExtraArgs={"ContentType": file.content_type}
-                    )
+                    ExtraArgs={"ACL": "public-read", "ContentType": file.content_type}
+                )
+
                 
                 image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_key}"
 
