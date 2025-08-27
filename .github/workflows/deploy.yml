@@ -2,9 +2,9 @@ name: Deploy Demo Infra
 
 on:
   workflow_dispatch:  # Trigger manually
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   deploy:

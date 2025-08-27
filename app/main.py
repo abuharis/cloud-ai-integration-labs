@@ -18,34 +18,47 @@ TABLE_NAME = os.getenv("DYNAMODB_TABLE")
 def home():
     return jsonify({"message": "Smart Photo Album API is running 🚀"})
 
+from flask import Flask, request, render_template
+import boto3, uuid
+
+app = Flask(__name__)
+
+s3 = boto3.client("s3")
+rekognition = boto3.client("rekognition")
+BUCKET_NAME = "demo-flask-bucket"  # replace with your bucket
+
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
+    labels = []      # initialize variables
+    image_url = None
+    error = None
+
     if request.method == "POST":
         if "file" not in request.files:
-            return render_template("upload.html", error="No file uploaded", labels=labels, image_url=image_url)
+            error = "No file uploaded"
+        else:
+            file = request.files["file"]
+            file_key = f"{uuid.uuid4()}-{file.filename}"
 
+            try:
+                # Upload to S3
+                s3.upload_fileobj(file, BUCKET_NAME, file_key)
+                image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_key}"
 
-        file = request.files["file"]
-        file_key = f"{uuid.uuid4()}-{file.filename}"
+                # Rekognition
+                response = rekognition.detect_labels(
+                    Image={"S3Object": {"Bucket": BUCKET_NAME, "Name": file_key}},
+                    MaxLabels=5,
+                    MinConfidence=80
+                )
+                labels = [{"Name": l["Name"], "Confidence": l["Confidence"]} for l in response["Labels"]]
 
-        try:
-            # Upload to S3
-            s3.upload_fileobj(file, BUCKET_NAME, file_key)
-            image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_key}"
+                # Future: store metadata in DynamoDB
 
-            response = rekognition.detect_labels(
-                Image={"S3Object": {"Bucket": BUCKET_NAME, "Name": file_key}},
-                MaxLabels=5,
-                MinConfidence=80
-            )
+            except Exception as e:
+                error = str(e)
 
-            labels = [{"Name": l["Name"], "Confidence": l["Confidence"]} for l in response["Labels"]]
-            # Future Proof: Store metadata in DynamoDB
-        
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-
-    return render_template("upload.html", labels=labels, image_url=image_url, error=None)
+    return render_template("upload.html", labels=labels, image_url=image_url, error=error)
 
 @app.route("/analyze/<file_key>", methods=["GET"])
 def analyze_file(file_key):
