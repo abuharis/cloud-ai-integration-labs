@@ -69,6 +69,7 @@ resource "aws_ecr_repository" "demo_repo" {
 # -------------------------
 resource "aws_s3_bucket" "demo_bucket" {
   bucket        = "demo-photo-album-${random_id.bucket_suffix.hex}"
+  acl    = "public-read" 
   force_destroy = true
 }
 
