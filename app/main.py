@@ -21,6 +21,7 @@ def home():
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
     labels = []      # initialize variables
+    faces = []
     image_url = None
     error = None
 
@@ -33,7 +34,12 @@ def upload_file():
 
             try:
                 # Upload to S3
-                s3.upload_fileobj(file, BUCKET_NAME, file_key)
+                s3.upload_fileobj(
+                    file, 
+                    BUCKET_NAME, 
+                    file_key, 
+                    ExtraArgs={"ContentType": file.content_type}
+                    )
                 image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_key}"
 
                 # Rekognition
@@ -44,12 +50,24 @@ def upload_file():
                 )
                 labels = [{"Name": l["Name"], "Confidence": l["Confidence"]} for l in response["Labels"]]
 
-                # Future: store metadata in DynamoDB
+                # Deetct faces
+                face_resp = rekognition.detect_faces(
+                    Image={"S3Object": {"Bucket": BUCKET_NAME, "Name": file_key}},
+                    Attributes=["ALL"]
+                )
+                for face in face_resp["FaceDetails"]:
+                    faces.append({
+                        "Gender": face["Gender"]["Value"],
+                        "GenderConfidence": face["Gender"]["Confidence"],
+                        "Emotions": sorted(face["Emotions"], key=lambda e: e["Confidence"], reverse=True)[:3],
+                        "Smile": face["Smile"]["Value"],
+                        "SmileConfidence": face["Smile"]["Confidence"]
+                    })
 
             except Exception as e:
                 error = str(e)
 
-    return render_template("upload.html", labels=labels, image_url=image_url, error=error)
+    return render_template("upload.html", labels=labels, faces=faces, image_url=image_url, error=error)
 
 @app.route("/analyze/<file_key>", methods=["GET"])
 def analyze_file(file_key):

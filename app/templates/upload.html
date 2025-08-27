@@ -2,6 +2,22 @@
 <html>
 <head>
   <title>Upload File and Detect Labels</title>
+  <style>
+    .bar-container {
+      width: 200px;
+      background-color: #f1f1f1;
+      border-radius: 5px;
+      margin-bottom: 5px;
+    }
+    .bar {
+      height: 18px;
+      background-color: #4CAF50;
+      text-align: right;
+      padding-right: 5px;
+      color: white;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 <body>
   <h1>Upload a File to S3 & Detect Labels</h1>
@@ -25,8 +41,39 @@
     <ul>
       {% for label in labels %}
         <li>{{ label.Name }} - {{ "%.2f"|format(label.Confidence) }}%</li>
+        <div class="bar-container">
+          <div class="bar" style="width: {{ "%.2f"|format(label.Confidence) }}%;">{{ "%.2f"|format(label.Confidence) }}%</div>
+        </div>
       {% endfor %}
     </ul>
+  {% endif %}
+
+  {% if faces %}
+    <h2>Detected Faces</h2>
+    {% for face in faces %}
+      <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px; max-width:400px;">
+        <p>
+          <strong>Gender:</strong> {{ face.Gender }} 
+          <div class="bar-container">
+            <div class="bar" style="width: {{ "%.2f"|format(face.GenderConfidence) }}%;">{{ "%.2f"|format(face.GenderConfidence) }}%</div>
+          </div>
+          <strong>Smile:</strong> {{ face.Smile }}
+          <div class="bar-container">
+            <div class="bar" style="width: {{ "%.2f"|format(face.SmileConfidence) }}%;">{{ "%.2f"|format(face.SmileConfidence) }}%</div>
+          </div>
+        </p>
+        <p><strong>Top Emotions:</strong></p>
+        <ul>
+          {% for emo in face.Emotions %}
+            <li>{{ emo.Type }} 
+              <div class="bar-container">
+                <div class="bar" style="width: {{ "%.2f"|format(emo.Confidence) }}%;">{{ "%.2f"|format(emo.Confidence) }}%</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
   {% endif %}
 </body>
 </html>
