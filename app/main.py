@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import boto3
 import os
 import uuid
@@ -18,8 +18,12 @@ TABLE_NAME = os.getenv("DYNAMODB_TABLE")
 def home():
     return jsonify({"message": "Smart Photo Album API is running 🚀"})
 
-@app.route("/upload", methods=["POST"])
+@app.route("/upload", methods=["GET", "POST"])
 def upload_file():
+    if request.method == "GET":
+        # Render the HTML form
+        return render_template("upload.html")
+
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
