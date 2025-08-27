@@ -18,15 +18,6 @@ TABLE_NAME = os.getenv("DYNAMODB_TABLE")
 def home():
     return jsonify({"message": "Smart Photo Album API is running 🚀"})
 
-from flask import Flask, request, render_template
-import boto3, uuid
-
-app = Flask(__name__)
-
-s3 = boto3.client("s3")
-rekognition = boto3.client("rekognition")
-BUCKET_NAME = "demo-flask-bucket"  # replace with your bucket
-
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
     labels = []      # initialize variables
