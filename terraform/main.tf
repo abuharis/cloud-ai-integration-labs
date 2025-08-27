@@ -119,7 +119,7 @@ resource "aws_iam_policy" "demo_ecs_task_policy" {
       },
       {
         Effect = "Allow"
-        Action = ["rekognition:DetectLabels"]
+        Action = ["rekognition:*"]
         Resource = "*"
       },
       {

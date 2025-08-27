@@ -40,7 +40,12 @@ def upload_file():
                     file_key, 
                     ExtraArgs={"ContentType": file.content_type}
                     )
-                image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{file_key}"
+                
+                image_url = s3.generate_presigned_url(
+                    "get_object",
+                    Params={"Bucket": BUCKET_NAME, "Key": file_key},
+                    ExpiresIn=3600
+                )
 
                 # Rekognition
                 response = rekognition.detect_labels(
