@@ -38,7 +38,7 @@ def upload_file():
                     file, 
                     BUCKET_NAME, 
                     file_key, 
-                    ExtraArgs={"ACL": "public-read", "ContentType": file.content_type}
+                    ExtraArgs={"ContentType": file.content_type}
                 )
 
                 
