@@ -62,32 +62,50 @@ resource "aws_security_group" "demo_sg" {
 # -------------------------
 resource "aws_ecr_repository" "demo_repo" {
   name = "demo-cloud-ai-integration"
+  image_tag_mutability = "MUTABLE"
+  force_delete         = true   # this allows deleting repo even if images exist
 }
 
-# -------------------------
-# S3 Bucket
-# -------------------------
+##########################
+# S3 Bucket for Demo
+##########################
 resource "aws_s3_bucket" "demo_bucket" {
-  bucket        = "demo-photo-album-${random_id.bucket_suffix.hex}"
-  acl    = "public-read" 
-  force_destroy = true
+  bucket = "cloudvision-demo-bucket"  # replace with your unique name
+
+  # Public access via bucket policy, so ACL is not needed
+  acl    = "private"  
+
+  tags = {
+    Name        = "cloudvision-demo-bucket"
+    Environment = "demo"
+  }
 }
 
-resource "random_id" "bucket_suffix" {
-  byte_length = 4
+##########################
+# Disable Block Public Access
+##########################
+resource "aws_s3_bucket_public_access_block" "demo_bucket_block" {
+  bucket                  = aws_s3_bucket.demo_bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
+##########################
+# Bucket Policy: Public Read
+##########################
 resource "aws_s3_bucket_policy" "demo_bucket_policy" {
   bucket = aws_s3_bucket.demo_bucket.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = ["s3:GetObject"]
+        Sid       = "PublicReadGetObject",
+        Effect    = "Allow",
+        Principal = "*",
+        Action    = ["s3:GetObject"],
         Resource  = "${aws_s3_bucket.demo_bucket.arn}/*"
       }
     ]
@@ -132,7 +150,7 @@ resource "aws_iam_policy" "demo_ecs_task_policy" {
     Statement = [
       {
         Effect = "Allow"
-        Action = ["s3:GetObject", "s3:PutObject"]
+        Action = ["s3:*"]
         Resource = "${aws_s3_bucket.demo_bucket.arn}/*"
       },
       {
