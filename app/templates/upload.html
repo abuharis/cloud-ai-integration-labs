@@ -1,13 +1,32 @@
 <!doctype html>
 <html>
 <head>
-  <title>Upload File</title>
+  <title>Upload File and Detect Labels</title>
 </head>
 <body>
-  <h1>Upload a File to S3</h1>
+  <h1>Upload a File to S3 & Detect Labels</h1>
+
+  {% if error %}
+    <p style="color:red">{{ error }}</p>
+  {% endif %}
+
   <form method="POST" enctype="multipart/form-data">
-    <input type="file" name="file">
+    <input type="file" name="file" required>
     <input type="submit" value="Upload">
   </form>
+
+  {% if image_url %}
+    <h2>Uploaded Image</h2>
+    <img src="{{ image_url }}" alt="Uploaded Image" style="max-width:300px;">
+  {% endif %}
+
+  {% if labels %}
+    <h2>Detected Labels</h2>
+    <ul>
+      {% for label in labels %}
+        <li>{{ label.Name }} - {{ "%.2f"|format(label.Confidence) }}%</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 </body>
 </html>
