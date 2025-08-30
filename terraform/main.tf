@@ -70,10 +70,7 @@ resource "aws_ecr_repository" "demo_repo" {
 # S3 Bucket for Demo
 ##########################
 resource "aws_s3_bucket" "demo_bucket" {
-  bucket = "cloudvision-demo-bucket"  # replace with your unique name
-
-  # Public access via bucket policy, so ACL is not needed
-  acl    = "private"  
+  bucket = "cloudvision-demo-bucket"  # replace with your unique name 
 
   tags = {
     Name        = "cloudvision-demo-bucket"
@@ -82,7 +79,7 @@ resource "aws_s3_bucket" "demo_bucket" {
 }
 
 ##########################
-# Disable Block Public Access
+# Disable block public access at bucket level
 ##########################
 resource "aws_s3_bucket_public_access_block" "demo_bucket_block" {
   bucket                  = aws_s3_bucket.demo_bucket.id
@@ -92,24 +89,26 @@ resource "aws_s3_bucket_public_access_block" "demo_bucket_block" {
   restrict_public_buckets = false
 }
 
-##########################
-# Bucket Policy: Public Read
-##########################
+# Public read policy
+data "aws_iam_policy_document" "public_read" {
+  statement {
+    effect = "Allow"
+    actions = ["s3:GetObject"]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    resources = ["${aws_s3_bucket.demo_bucket.arn}/*"]
+  }
+}
+
 resource "aws_s3_bucket_policy" "demo_bucket_policy" {
   bucket = aws_s3_bucket.demo_bucket.id
+  policy = data.aws_iam_policy_document.public_read.json
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject",
-        Effect    = "Allow",
-        Principal = "*",
-        Action    = ["s3:GetObject"],
-        Resource  = "${aws_s3_bucket.demo_bucket.arn}/*"
-      }
-    ]
-  })
+  depends_on = [
+    aws_s3_bucket_public_access_block.demo_bucket_block
+  ]
 }
 
 # -------------------------
