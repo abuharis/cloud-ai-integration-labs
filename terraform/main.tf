@@ -71,6 +71,7 @@ resource "aws_ecr_repository" "demo_repo" {
 ##########################
 resource "aws_s3_bucket" "demo_bucket" {
   bucket = "cloudvision-demo-bucket"  # replace with your unique name 
+  force_destroy = true
 
   tags = {
     Name        = "cloudvision-demo-bucket"
